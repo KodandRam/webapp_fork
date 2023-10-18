@@ -1,3 +1,4 @@
+
 const { db } = require('../models/model');
 
 const hasPayload = (req) => req.body && Object.keys(req.body).length !== 0;

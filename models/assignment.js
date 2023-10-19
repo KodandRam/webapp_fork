@@ -1,10 +1,10 @@
 const { Sequelize, DataTypes, Model } = require('sequelize');
 
-class assignment extends Model { }
+class Assignment extends Model { }
 
-assignment.initModel = (db) => {
+Assignment.initModel = (db) => {
 
-  assignment.init({
+  Assignment.init({
     id: {
       type: DataTypes.UUID,
       defaultValue: Sequelize.UUIDV4,
@@ -65,4 +65,4 @@ assignment.initModel = (db) => {
 
 }
 
-module.exports = assignment;
+module.exports = Assignment;

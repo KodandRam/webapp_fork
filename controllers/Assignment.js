@@ -1,4 +1,4 @@
-const { Assignment } = require('../models/healthCheck');
+const { Assignment } = require('../models/model');
 const { ValidationError } = require('sequelize');
 
 const hasPayload = (req) => req.body && Object.keys(req.body).length !== 0;

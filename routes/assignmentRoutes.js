@@ -1,10 +1,10 @@
 const express = require('express');
-const { authenticateUser } = require('../middleware/authentication');
+const { authenticateUser } = require('../middleware/authenticateUser');
 const { getAssignments,
     getAssignmentById,
     createAssignment,
     updateAssignment,
-    deleteAssignment } = require('../controllers/assignmentController');
+    deleteAssignment } = require('../controllers/Assignment');
 
 const router = express.Router();
 

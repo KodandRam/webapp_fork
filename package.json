@@ -12,7 +12,7 @@
     "type": "git",
     "url": ""
   },
-  "author": "Kodand Ram Movva",
+  "author": "Ram movva",
 
   "license": "ISC",
   "dependencies": {
@@ -36,6 +36,5 @@
     "url": "https://github.com/"
   },
   "homepage": ""
-
 }
 

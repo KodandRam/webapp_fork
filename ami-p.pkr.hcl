@@ -38,7 +38,6 @@ variable "ami_region_list" {
 
 variable "ami_users_list" {
   type    = list(string)
-
   default = ["785899790696", "189917391871"]
 
 }
@@ -135,7 +134,8 @@ build {
   }
   provisioner "file" {
     destination = "/opt/start_up.sh"
-    source      = "scripts/start.sh"
+    source      = "scripts/init.sh"
+
   }
   provisioner "shell" {
     inline = [
@@ -156,7 +156,8 @@ build {
       "PORT=${var.PORT}",
       "ENV_TYPE=${var.ENV_TYPE}"
     ]
-    scripts = ["./scripts/start.sh"]
+    scripts = ["./scripts/init.sh"]
+
   }
 
   post-processor "manifest" {

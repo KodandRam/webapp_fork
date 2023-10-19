@@ -6,7 +6,8 @@ const Sequelize = require('sequelize');
 const config = require('../config/config');
 
 const Account = require('./Account');
-const Assignment = require('./assignment');
+const Assignment = require('./Assignment');
+
 
 const env = process.env.NODE_ENV || 'development';
 const currentConfig = config[env];

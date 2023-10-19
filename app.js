@@ -20,7 +20,6 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 8080;
 
-
 app.use(healthRoutes);
 app.use('/v1/assignments', assignmentRoutes);
 

@@ -1,6 +1,7 @@
 const Account = require('../models/account');
 const bcrypt = require('bcrypt');
 
+
 const authenticateUser = async (req, res, next) => {
     try {
         const authorization = req.get('Authorization');
@@ -37,4 +38,6 @@ const authenticateUser = async (req, res, next) => {
     }
 };
 
+
 module.exports = { authenticateUser };
+

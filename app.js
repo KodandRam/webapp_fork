@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 
 const express = require('express');
@@ -43,3 +44,4 @@ db.sync({ force: false, alter: true })
     });
 
 module.exports = app;
+

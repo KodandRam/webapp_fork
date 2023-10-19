@@ -1,3 +1,4 @@
+
 const { Sequelize, DataTypes, Model } = require('sequelize');
 
 class assignment extends Model { }
@@ -66,3 +67,4 @@ assignment.initModel = (db) => {
 }
 
 module.exports = assignment;
+

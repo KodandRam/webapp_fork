@@ -1,3 +1,5 @@
+
+
 const { Assignment } = require('../models/healthCheck');
 const { ValidationError } = require('sequelize');
 
@@ -129,4 +131,6 @@ module.exports = {
     createAssignment,
     updateAssignment,
     deleteAssignment
+
 };
+

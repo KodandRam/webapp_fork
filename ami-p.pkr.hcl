@@ -150,7 +150,7 @@ build {
       "PORT=${var.PORT}",
       "ENV_TYPE=${var.ENV_TYPE}"
     ]
-    scripts = ["./scripts/init.sh"]
+    scripts = ["./scripts/start.sh"]
   }
 
   post-processor "manifest" {

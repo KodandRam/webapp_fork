@@ -1,5 +1,7 @@
 
+
 const { db } = require('../models/healthCheck');
+
 
 
 const hasPayload = (req) => req.body && Object.keys(req.body).length !== 0;

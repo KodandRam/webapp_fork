@@ -1,4 +1,4 @@
-// Load environment variables from .env file into process.env
+
 require('dotenv').config();
 
 const chai = require('chai');
@@ -15,3 +15,4 @@ describe('HealthTestSuite - Checking Healthz API Endpoint', () => {
         expect(res).to.have.header('cache-control', 'no-cache, no-store, must-revalidate');
     });
 });
+

@@ -1,3 +1,4 @@
+
 const { Sequelize, DataTypes, Model } = require('sequelize');
 
 class Account extends Model { }
@@ -45,5 +46,6 @@ Account.initModel = (db) => {
   })
 
 };
+
 
 module.exports = Account;

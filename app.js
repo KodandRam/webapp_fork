@@ -1,13 +1,15 @@
-// Loading environment variables from .env file
+
 require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+
 const { healthRoutes, assignmentRoutes } = require('./routes');
 
 // Importing Sequelize database connection (instance)
 const { db } = require('./models/model');
+
 const processCsv = require('./helpers/userImporter');
 const app = express();
 
@@ -20,6 +22,7 @@ const PORT = process.env.PORT || 8080;
 
 app.use(healthRoutes);
 app.use('/v1/assignments', assignmentRoutes);
+
 
 const filePath = path.join(__dirname, '/opt/users.csv');
 // const filePath = '/opt/users.csv'
@@ -44,3 +47,4 @@ db.sync({ force: false, alter: true })
     });
 
 module.exports = app;
+

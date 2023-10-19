@@ -1,56 +1,42 @@
 const Account = require('../models/account');
 const bcrypt = require('bcrypt');
 
-const authentication = async (req, res, next) => {
-  const authHeader = req.header('Authorization');
-  if (!authHeader || !authHeader.startsWith('Basic ')) {
-    return res.status(401).json({ error: 'Unauthorized1' });
-  }
 
-  const base64Credentials = authHeader.split(' ')[1];
-  const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8');
-  const [username, password] = credentials.split(':');
+const authenticateUser = async (req, res, next) => {
+    try {
+        const authorization = req.get('Authorization');
 
-  try {
-    const user = await Account.findOne({ where: { email: username } });
+        if (!authorization) {
+            console.log("Authentication failed: Basic Authentication is required");
+            return res.status(401).header('WWW-Authenticate', 'Basic').send("Authentication required");
+        }
 
-    if (!user) {
+        const encodedCredentials = authorization.replace('Basic ', '');
+        const decodedCredentials = Buffer.from(encodedCredentials, 'base64').toString('utf8');
+        const [username, password] = decodedCredentials.split(':');
+        console.log(username, password)
+        const account = await Account.findOne({ where: { email: username } });
 
-      return res.status(401).json({ error: 'Unauthorized,username' });
+        if (!account) {
+            console.error(`Authentication failed: User: ${username} Not found`);
+            return res.status(401).send("Unauthorized: Invalid username or password");
+        }
+
+        const isValidPassword = await bcrypt.compare(password, account.password);
+
+        if (!isValidPassword) {
+            console.error(`Authentication failed: Invalid password for user: ${username}`);
+            return res.status(401).send("Unauthorized: Invalid username or password");
+        }
+
+        req.account = account;
+        next();
+
+    } catch (err) {
+        console.error(`Authentication failed: ${err.message}`);
+        return res.status(500).send("Internal Server Error");
     }
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatch) {
-      return res.status(401).json({ error: 'Unauthorized,password' });
-    }
-
-    // Attach the user object to the request for further use in routes
-    req.user = {email : username, id : user.id};
-
-    next();
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
 };
 
-// Middleware to handle all other health check request types (put, post, delete, patch)
-// Return the status as 405 (Not Supported)
-const inValidHealthRequests = (req,res) => {
-  if (!['GET'].includes(req.method)) {
-    res.status(405).header('Cache-Control', 'no-cache').send();
-  }
-  else{
-    next();
-  }
-};
-
-// Middleware to handle all other request types (patch)
-// Return the status as 405 (Not Supported)
-const inValidRequests = (req,res) => {
-    return res.status(405).header('Cache-Control', 'no-cache').send();
-};
-
-module.exports = {authentication,inValidHealthRequests, inValidRequests};
+module.exports = { authenticateUser };
 

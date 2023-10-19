@@ -1,26 +1,47 @@
 
+require('dotenv').config();
+
 const express = require('express');
-const accountController = require('./controllers/accountController'); 
-const dotenv = require("dotenv")
-const apiRouter = require('./routes/api');
-const app = express();
-dotenv.config()
 const bodyParser = require('body-parser');
+const path = require('path');
+const { healthCheckRoute, assignmentRoute } = require('./routes');
 
-const sequelize = require('./config/database');
+// Importing Sequelize database connection (instance)
+const { db } = require('./models/healthCheck');
+const processCsv = require('./helpers/userImporter');
+const app = express();
 
-sequelize.sync().then(() => {
-  console.log('Connected to the database.');
-
-  accountController.loadUsersFromCSV(); 
-});
-
+// body-parser middleware to parse incoming JSON requests
 app.use(bodyParser.json());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use(apiRouter);
+const PORT = process.env.PORT || 8080;
 
-const port = process.env.PORT || 8080;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-  console.log(process.env.DB_Database);
-});
+app.use(healthCheckRoute);
+app.use('/v1/assignments', assignmentRoute);
+
+const filePath = path.join(__dirname, '/opt/users.csv');
+// const filePath = '/opt/users.csv'
+processCsv(filePath);
+
+// Sync the database and start the server 
+// Set force to false to avoid dropping tables
+
+// alter: true: Adjusts database tables to match model definitions. 
+// Adds or removes columns as necessary without dropping tables. 
+// Useful for updating the database schema after changes to models
+
+db.sync({ force: false, alter: true })
+    .then(() => {
+        app.listen(PORT, () => {
+            console.log(`Web Server running on http://localhost:${PORT}`);
+        });
+    })
+    .catch((error) => {
+        console.error('Error syncing database:', error);
+        process.exit(1);  // Exit the process with failure code
+    });
+
+module.exports = app;
+

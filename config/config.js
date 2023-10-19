@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 
 const config = {
@@ -13,6 +12,4 @@ const config = {
   }
 }
 
-
 module.exports = config;
-

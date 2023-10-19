@@ -1,0 +1,59 @@
+name: validation 
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  packer_validate:
+    name: Packer Format
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Packer
+      uses: hashicorp/setup-packer@main
+      with:
+        packer_version: latest
+      
+    - name: Packer Init
+      run: |
+        packer init .
+    
+    - name: Zip the webapp
+      run: zip -r ${{ github.workspace }}/webapp.zip .
+        
+    - name: Check Packer Format
+      run: |
+        if ! packer fmt -check . ; then
+          echo "Packer check failed"
+          exit 1
+        fi
+        
+    - name: Validate Packer
+      env:
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        PORT: ${{ secrets.PORT }}
+        ENV_TYPE: ${{ secrets.ENV_TYPE }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_DIALECT: ${{ secrets.DB_DIALECT }}
+      run: |
+        if ! packer validate \
+          -var "DB_USERNAME=${DB_USERNAME}" \
+          -var "DB_PASSWORD=${DB_PASSWORD}" \
+          -var "DB_DIALECT=${DB_DIALECT}" \
+          -var "DB_PORT=${DB_PORT}" \
+          -var "DB_NAME=${DB_NAME}" \
+          -var "PORT=${PORT}" \
+          -var "ENV_TYPE=${ENV_TYPE}" \
+          -var "DB_HOST=${DB_HOST}" 
+          . ; then
+          echo "validation failed"
+          exit 1
+        fi

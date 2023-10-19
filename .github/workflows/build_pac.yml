@@ -1,0 +1,65 @@
+name: AMI Build
+
+on:
+  push:
+  workflow_run:
+    workflows: ["Integration test"]
+    types:
+      - completed
+jobs:
+  build_ami:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Packer
+      uses: hashicorp/setup-packer@main
+      with:
+        packer_version: latest
+    
+    - name: Packer Init
+      run: |
+        packer init .
+
+    - name: Zip the webapp
+      run: zip -r ${{ github.workspace }}/webapp.zip .
+
+    - name: Build AMI
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_DIALECT: ${{ secrets.DB_DIALECT }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        ENV_TYPE: ${{ secrets.ENV_TYPE }}
+        PORT: ${{ secrets.PORT }}
+        PACKER_LOG: 1
+      run: |
+        packer build -debug \
+        -var "DB_USERNAME=${{ secrets.DB_USERNAME }}" \
+        -var "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
+        -var "DB_PORT=${{ secrets.DB_PORT }}" \
+        -var "DB_NAME=${{ secrets.DB_NAME }}" \
+        -var "PORT=${{ secrets.PORT }}" \
+        -var "ENV_TYPE=${{ secrets.ENV_TYPE }}" \
+        -var "DB_HOST=${{ secrets.DB_HOST }}" \
+        -var "DB_DIALECT=${{ secrets.DB_DIALECT }}" \
+        ami-p.pkr.hcl
+        
+
+      

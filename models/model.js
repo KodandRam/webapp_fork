@@ -1,13 +1,13 @@
-
 // Load environment variables from .env file into process.env
 require('dotenv').config();
 
 const Sequelize = require('sequelize');
 // Import database configuration
-const config = require('../config/database');
+const config = require('../config/config');
 
-const Account = require('./account');
-const Assignment = require('./assignment');
+const Account = require('./Account');
+const Assignment = require('./Assignment');
+
 
 const env = process.env.NODE_ENV || 'development';
 const currentConfig = config[env];
@@ -22,6 +22,4 @@ Assignment.initModel(db);
 Account.hasMany(Assignment, { foreignKey: 'accountId', as: 'assignments' });
 Assignment.belongsTo(Account, { foreignKey: 'accountId', as: 'account' });
 
-
 module.exports = { db, Account, Assignment }
-

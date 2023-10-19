@@ -1,62 +1,99 @@
-# Web Application
+# webapp
 
-This web application is designed to [briefly describe the purpose of your web application].
+## Cloud Computing (CSYE 6225)
 
-## Prerequisites
+# Project Setup
 
-Before you begin, ensure you have met the following requirements:
-
-- **Node.js**: You need to have Node.js installed on your machine. You can download it from [nodejs.org](https://nodejs.org/).
-
-- **Database Setup**: The application uses PostgreSQL as the database. Make sure you have PostgreSQL installed and configured with the necessary tables. Update the database configuration in the `config/database.js` file.
-
-- **CSV Data**: Prepare a CSV file with user account information and save it to `/opt/user.csv`.
-
-## Installation
-
-To install the necessary dependencies, follow these steps:
-
-Clone this repository:
-
-   ```bash
-   git clone https://github.com/your-username/webapp.git
-   cd webapp
-
-Install Node.js dependencies:
-bash
-Copy code
+npm init
 npm install
+npm start
+Running Tests - npx mocha tests/*.test.js
 
-Configure Environment Variables:
-Create a .env file in the root directory of the project and set any required environment variables, such as database credentials.
+cd /Applications/Postgres.app/Contents/Versions/latest/bin
+./psql -U nikhil -d postgres
 
-Authentication
+lsof -i:8080
+kill -9 **pid**
 
-The web application uses Token-Based authentication. You must provide a valid authentication token when making API calls to authenticated endpoints. The authentication.js file contains the authentication middleware.
+In psql terminal - SELECT version();
+\l: List all databases.
+\c postgres: Connect to the 'postgres' database.
+\d assignments: Display the structure of the 'assignments' table.
+\q: Quit the psql terminal.
 
-API Endpoints
 
-The web application provides the following API endpoints:
+SSH into your droplet - ssh -i ~/.ssh/digitalocean root@ip
+Transfer your project files to the droplet - scp -i ~/.ssh/digitalocean zip_file_path root@ip:/opt
+exit the SSH session - exit
+cd /opt
 
-/api/healthz (GET): Health check endpoint to verify the applications status.
-/api/v1/assignments (POST): Create a new assignment.
-/api/v1/assignments (GET): Get a list of all assignments.
-/api/v1/assignments/:id (GET): Get assignment details by ID.
-/api/v1/assignments/:id (PUT): Update an assignment (only the creator can update).
-/api/v1/assignments/:id (DELETE): Delete an assignment (only the creator can delete).
+steps to install node.js and postgres in Debian 12 VM running in Digital Ocean
 
-Assignment Creation
-To create a new assignment, make a POST request to /api/v1/assignments with a JSON payload. Ensure that the assignment points are between 1 and 10.
+node --version v16.17.0
+npm --version 8.15.0
+PostgreSQL 16.0
 
-Assignment Update
-To update an assignment, make a PUT request to /api/v1/assignments/:id with a JSON payload. Only the user who created the assignment can update it.
+sudo apt update
+sudo apt upgrade
 
-Assignment Deletion
-To delete an assignment, make a DELETE request to /api/v1/assignments/:id. Only the user who created the assignment can delete it.
+which curl
+/usr/bin/curl
 
-Assignment Listing
-To get a list of all assignments, make a GET request to /api/v1/assignments. The response will contain a list of assignment objects.
+# Using NodeSource distributions for specific version
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
-Assignment Details
-To get assignment details by ID, make a GET request to /api/v1/assignments/:id. The response will contain the assignment details.
+sudo apt install nodejs
+sudo apt install npm
 
+node --version
+npm --version
+
+
+sudo apt update
+sudo apt install apt-transport-https lsb-release ca-certificates curl dirmngr gnupg
+
+sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
+sudo apt update
+sudo apt install postgresql
+sudo systemctl start postgresql
+sudo systemctl enable postgresql-12
+
+sudo su - postgres
+psql -c "alter user postgres with password 'StrongAdminPassw0rd'"
+psql
+
+sudo -u postgres psql
+sudo nano /etc/postgresql/**version**/main/pg_hba.conf
+
+
+echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
+sudo apt update
+
+sudo apt install postgresql
+
+systemctl status postgresql
+
+sudo -u postgres psql
+
+\q
+
+# Directory should we host our applicaion in debian - /opt
+-- 2 seats do we have to include in the GitHub 'teams' plan
+-- GitHub organization - private project - fork - it to personal name space
+-- integration test in github actions
+GitHub Action Workflows - users.csv inside our directory for git CI Workflow actions
+It should live with your test code and be copied to the right location for your tests to run
+write actual integration tests - You cannot access that locally from your machine
+integration test in github actions runner
+
+yaml file is supposed to be in org Repo - to run the GitHub workflows
+script in yaml file, the job will include run npm test
+while running test for API endpoints, it searches for /opt/users.csv file
+parse this file in GitHub action

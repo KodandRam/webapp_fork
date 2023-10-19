@@ -4,10 +4,12 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { healthCheckRoute, assignmentRoute } = require('./routes');
+
+const { healthRoutes, assignmentRoutes } = require('./routes');
 
 // Importing Sequelize database connection (instance)
-const { db } = require('./models/healthCheck');
+const { db } = require('./models/model');
+
 const processCsv = require('./helpers/userImporter');
 const app = express();
 
@@ -18,8 +20,10 @@ app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 8080;
 
-app.use(healthCheckRoute);
-app.use('/v1/assignments', assignmentRoute);
+
+app.use(healthRoutes);
+app.use('/v1/assignments', assignmentRoutes);
+
 
 const filePath = path.join(__dirname, '/opt/users.csv');
 // const filePath = '/opt/users.csv'
@@ -42,6 +46,7 @@ db.sync({ force: false, alter: true })
         console.error('Error syncing database:', error);
         process.exit(1);  // Exit the process with failure code
     });
+
 
 module.exports = app;
 

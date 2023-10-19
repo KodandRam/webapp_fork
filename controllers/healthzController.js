@@ -1,4 +1,4 @@
-const { db } = require('../models/model');
+const { db } = require('../models/healthCheck');
 
 const hasPayload = (req) => req.body && Object.keys(req.body).length !== 0;
 const hasQueryParameters = (req) => req.query && Object.keys(req.query).length !== 0;

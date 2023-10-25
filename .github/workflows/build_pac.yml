@@ -1,7 +1,11 @@
 name: AMI Build
 
+run-name: ${{ github.actor }} is running packer build
+
 on:
   push:
+    branches:
+      - main
   workflow_run:
     workflows: ["Integration test"]
     types:
@@ -36,6 +40,15 @@ jobs:
     - name: Zip the webapp
       run: zip -r ${{ github.workspace }}/webapp.zip .
 
+    - name: Check if webapp.zip exists
+      run: |
+        if [ ! -f ./webapp.zip ]; then
+          echo "webapp.zip does not exist!"
+          exit 1
+        else
+          echo "webapp.zip exists."
+        fi
+
     - name: Build AMI
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -50,16 +63,25 @@ jobs:
         PORT: ${{ secrets.PORT }}
         PACKER_LOG: 1
       run: |
+        echo "Setting environment variables..."
+        export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+        export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        export DB_USERNAME=${{ secrets.DB_USERNAME }}
+        export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+        export DB_DIALECT=${{ secrets.DB_DIALECT }}
+        export DB_HOST=${{ secrets.DB_HOST }}
+        export DB_NAME=${{ secrets.DB_NAME }}
+        export DB_PORT=${{ secrets.DB_PORT }}
+        export ENV_TYPE=${{ secrets.ENV_TYPE }}
+        export PORT=${{ secrets.PORT }}
+        echo "Starting Packer build with debug mode..."
         packer build -debug \
         -var "DB_USERNAME=${{ secrets.DB_USERNAME }}" \
         -var "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" \
+        -var "DB_HOST=${{ secrets.DB_HOST }}" \
+        -var "DB_DIALECT=${{ secrets.DB_DIALECT }}" \
         -var "DB_PORT=${{ secrets.DB_PORT }}" \
         -var "DB_NAME=${{ secrets.DB_NAME }}" \
         -var "PORT=${{ secrets.PORT }}" \
         -var "ENV_TYPE=${{ secrets.ENV_TYPE }}" \
-        -var "DB_HOST=${{ secrets.DB_HOST }}" \
-        -var "DB_DIALECT=${{ secrets.DB_DIALECT }}" \
-        ami-p.pkr.hcl
-        
-
-      
+        ami-pa.pkr.hcl

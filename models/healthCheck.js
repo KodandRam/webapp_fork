@@ -6,8 +6,8 @@ const Sequelize = require('sequelize');
 // Import database configuration
 const config = require('../config/database');
 
-const Account = require('./account');
-const Assignment = require('./assignment');
+const Account = require('./Account');
+const Assignment = require('./Assignment');
 
 const env = process.env.NODE_ENV || 'development';
 const currentConfig = config[env];

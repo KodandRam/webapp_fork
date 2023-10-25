@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 
 const express = require('express');
@@ -23,28 +22,33 @@ const PORT = process.env.PORT || 8080;
 app.use(healthRoutes);
 app.use('/v1/assignments', assignmentRoutes);
 
-
 const filePath = path.join(__dirname, '/opt/users.csv');
-// const filePath = '/opt/users.csv'
-processCsv(filePath);
 
-// Sync the database and start the server 
-// Set force to false to avoid dropping tables
+// Process CSV only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+    processCsv(filePath);
+}
 
-// alter: true: Adjusts database tables to match model definitions. 
-// Adds or removes columns as necessary without dropping tables. 
-// Useful for updating the database schema after changes to models
-
-db.sync({ force: false, alter: true })
-    .then(() => {
-        app.listen(PORT, () => {
-            console.log(`Web Server running on http://localhost:${PORT}`);
+const startServer = () => {
+    db.sync({ force: false, alter: true })
+        .then(() => {
+            const server = app.listen(PORT, () => {
+                console.log(`Web Server running on http://localhost:${PORT}`);
+            });
+            return server;
+        })
+        .catch((error) => {
+            console.error('Error syncing database:', error);
+            process.exit(1);  // Exit the process with failure code
         });
-    })
-    .catch((error) => {
-        console.error('Error syncing database:', error);
-        process.exit(1);  // Exit the process with failure code
-    });
+};
 
-module.exports = app;
+// Check for testing environment before starting the server
+if (process.env.NODE_ENV !== 'test') {
+    startServer();
+}
 
+module.exports = {
+    app,
+    startServer
+};

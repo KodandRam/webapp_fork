@@ -20,15 +20,12 @@ const processCsv = async (filePath) => {
 
 const processRow = async (row) => {
     try {
-        // Check if the password field exists and is not empty
-        const hashedPassword = row.password ? await bcrypt.hash(row.password, 10) : null;
-
         const [user, created] = await Account.findOrCreate({
             where: { email: row.email },
             defaults: {
                 first_name: row.first_name,
                 last_name: row.last_name,
-                password: hashedPassword,
+                password: await bcrypt.hash(row.password, 10),
                 account_created: new Date(),
                 account_updated: new Date()
             }
@@ -44,6 +41,5 @@ const processRow = async (row) => {
         console.error('Error processing user:', err);
     }
 };
-
 
 module.exports = processCsv;

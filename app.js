@@ -12,43 +12,38 @@ const { db } = require('./models/model');
 const processCsv = require('./helpers/userImporter');
 const app = express();
 
-// body-parser middleware to parse incoming JSON requests
+// Middleware
 app.use(bodyParser.json());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT || 8080;
 
+// Routes
 app.use(healthRoutes);
 app.use('/v1/assignments', assignmentRoutes);
 
+// Process CSV
 const filePath = path.join(__dirname, '/opt/users.csv');
+processCsv(filePath);
 
-// Process CSV only if not in test environment
-if (process.env.NODE_ENV !== 'test') {
-    processCsv(filePath);
-}
-
+// Start the server function
 const startServer = () => {
-    db.sync({ force: false, alter: true })
-        .then(() => {
-            const server = app.listen(PORT, () => {
-                console.log(`Web Server running on http://localhost:${PORT}`);
-            });
-            return server;
-        })
-        .catch((error) => {
-            console.error('Error syncing database:', error);
-            process.exit(1);  // Exit the process with failure code
+    try {
+        app.listen(PORT, () => {
+            console.log(`Web Server running on http://localhost:${PORT}`);
         });
+    } catch (error) {
+        console.error('Error starting the server:', error);
+    }
 };
 
-// Check for testing environment before starting the server
-if (process.env.NODE_ENV !== 'test') {
-    startServer();
-}
+// Sync the database and start the server
+db.sync({ force: false, alter: true })
+    .then(startServer)
+    .catch((error) => {
+        console.error('Error syncing database:', error);
+        process.exit(1);
+    });
 
-module.exports = {
-    app,
-    startServer
-};
+module.exports = app;

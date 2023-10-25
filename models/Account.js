@@ -47,5 +47,4 @@ Account.initModel = (db) => {
 
 };
 
-
 module.exports = Account;

@@ -87,6 +87,30 @@ const createAssignment = async (req, res) => {
     }
 };
 
+const deleteAssignment = async (req, res) => {
+    try {
+        const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+
+        if (!uuidPattern.test(req.params.id)) {
+            return res.status(400).json({ error: 'Invalid UUID format.' });
+        }
+
+        const assignment = await Assignment.findByPk(req.params.id);
+        console.log(assignment);
+        if (!assignment) return res.status(404).json({ error: 'Assignment not found.' });
+
+        if (assignment.accountId !== req.account.id) {
+            return res.status(403).json({ error: 'Not authorized to delete this assignment.' });
+        }
+
+        await assignment.destroy();
+        res.status(204).send();
+    } catch (err) {
+        console.error('Error during deletion:', err);
+        res.status(500).json({ error: 'Failed to delete assignment.' });
+    }
+};
+
 const updateAssignment = async (req, res) => {
     const { validatedData, errors } = validateAssignmentData(req.body);
 
@@ -95,8 +119,18 @@ const updateAssignment = async (req, res) => {
     }
 
     try {
-        const assignment = await Assignment.findOne({ where: { id: req.params.id, accountId: req.account.id } });
-        if (!assignment) return res.status(403).json({ error: 'Not authorized to update this assignment.' });
+        const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+
+        if (!uuidPattern.test(req.params.id)) {
+            return res.status(400).json({ error: 'Invalid UUID format.' });
+        }
+
+        const assignment = await Assignment.findByPk(req.params.id);
+        if (!assignment) return res.status(404).json({ error: 'Assignment not found.' });
+
+        if (assignment.accountId !== req.account.id) {
+            return res.status(403).json({ error: 'Not authorized to update this assignment.' });
+        }
 
         validatedData.assignment_updated = new Date();
         await assignment.update(validatedData);
@@ -107,18 +141,6 @@ const updateAssignment = async (req, res) => {
         } else {
             res.status(500).json({ error: 'Failed to update assignment.' });
         }
-    }
-};
-
-const deleteAssignment = async (req, res) => {
-    try {
-        const assignment = await Assignment.findOne({ where: { id: req.params.id, accountId: req.account.id } });
-        if (!assignment) return res.status(403).json({ error: 'Not authorized to delete this assignment.' });
-
-        await assignment.destroy();
-        res.status(204).send();
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to delete assignment.' });
     }
 };
 

@@ -6,7 +6,7 @@ const app = require('./app');
 // Importing Sequelize database connection (instance)
 const { db } = require('./models/model');
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 8080;
 
 // Sync the database and start the server 
 // Set force to false to avoid dropping tables

@@ -7,6 +7,7 @@ packer {
   }
 }
 
+
 variable "aws_region" {
   type    = string
   default = "us-east-1"
@@ -14,9 +15,7 @@ variable "aws_region" {
 
 variable "source_ami" {
   type    = string
-
   default = "ami-06db4d78cb1d3bbf9"
-
 }
 
 variable "ssh_username" {
@@ -26,9 +25,7 @@ variable "ssh_username" {
 
 variable "subnet_id" {
   type    = string
-
-  default = "subnet-0786381d90ab4c07a"
-
+  default = "	subnet-0b0c5a5b30d6a7479"
 }
 
 variable "ami_region_list" {
@@ -39,7 +36,6 @@ variable "ami_region_list" {
 variable "ami_users_list" {
   type    = list(string)
   default = ["785899790696", "189917391871"]
-
 }
 
 variable "DB_USERNAME" {
@@ -135,7 +131,6 @@ build {
   provisioner "file" {
     destination = "/opt/start_up.sh"
     source      = "scripts/init.sh"
-
   }
   provisioner "shell" {
     inline = [
@@ -157,7 +152,6 @@ build {
       "ENV_TYPE=${var.ENV_TYPE}"
     ]
     scripts = ["./scripts/init.sh"]
-
   }
 
   post-processor "manifest" {

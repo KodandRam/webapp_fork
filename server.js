@@ -15,7 +15,6 @@ const PORT = process.env.PORT || 8080;
 // Adds or removes columns as necessary without dropping tables. 
 // Useful for updating the database schema after changes to models
 
-
 db.sync({ force: false, alter: true })
     .then(() => {
         app.listen(PORT, () => {

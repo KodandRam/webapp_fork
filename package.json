@@ -3,9 +3,9 @@
   "name": "webapp",
   "version": "1.0.0",
   "description": "## Cloud Computing (CSYE 6225)",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
-    "start": "nodemon app.js",
+    "start": "nodemon server.js",
     "test": "mocha tests/*.test.js"
   },
   "repository": {

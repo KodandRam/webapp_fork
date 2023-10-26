@@ -45,5 +45,4 @@ const processRow = async (row) => {
     }
 };
 
-
 module.exports = processCsv;

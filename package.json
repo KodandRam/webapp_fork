@@ -27,7 +27,9 @@
     "sequelize": "^6.33.0",
     "chai": "^4.3.8",
     "chai-http": "^4.4.0",
-    "mocha": "^10.2.0"
+    "mocha": "^10.2.0",
+    "node-statsd": "^0.1.1",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

@@ -3,9 +3,12 @@ const csv = require('csv-parser');
 const bcrypt = require('bcrypt');
 const Account = require('../models/Account');
 
+const logger = require('../log');
+
 const processCsv = async (filePath) => {
     fs.createReadStream(filePath)
         .on('error', (err) => {
+            logger.error('Error reading the CSV file:', err.message);
             console.error('Error reading the CSV file:', err.message);
         })
         .pipe(csv())
@@ -13,6 +16,7 @@ const processCsv = async (filePath) => {
             processRow(row);
         })
         .on('end', () => {
+            logger.info('CSV file successfully processed..');
             console.log('CSV file successfully processed..');
         });
 };
@@ -31,12 +35,15 @@ const processRow = async (row) => {
         });
 
         if (created) {
+            logger.info(`User ${row.email} created.`);
             console.log(`User ${row.email} created.`);
         } else {
+            logger.warn(`User ${row.email} already exists.`);
             console.log(`User ${row.email} already exists.`);
         }
 
     } catch (err) {
+        logger.error('Error processing user:', err);
         console.error('Error processing user:', err);
     }
 };

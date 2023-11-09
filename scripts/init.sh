@@ -106,3 +106,12 @@ sudo systemctl daemon-reload
 sudo systemctl enable csye6225_webapp
 sudo systemctl start csye6225_webapp
 sudo systemctl restart csye6225_webapp
+
+sudo wget https://amazoncloudwatch-agent.s3.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb
+
+sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+sudo apt-get install -f
+
+sudo systemctl daemon-reload
+sudo systemctl enable amazon-cloudwatch-agent
+sudo systemctl start amazon-cloudwatch-agent

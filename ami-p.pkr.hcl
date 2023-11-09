@@ -113,9 +113,7 @@ build {
       "sudo mkdir -p /opt",
       "chmod u+w /home/admin",
       "sudo chown admin:admin /opt",
-      "sudo chmod 755 /opt",
-      "sudo chown -R admin:admin /usr/local/",
-      "sudo chmod -R 755 /usr/local/"
+      "sudo chmod 755 /opt"
     ]
   }
 
@@ -128,6 +126,12 @@ build {
     destination = "/opt/users.csv"
     source      = "opt/users.csv"
   }
+
+  provisioner "file" {
+    destination = "/opt/cloudwatch-config.json"
+    source      = "scripts/cloudwatch-config.json"
+  }
+
   provisioner "file" {
     destination = "/opt/start_up.sh"
     source      = "scripts/init.sh"

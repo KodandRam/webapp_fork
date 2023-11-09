@@ -133,12 +133,12 @@ build {
   }
 
   provisioner "file" {
-    destination = "/opt/start_up.sh"
+    destination = "/opt/init.sh"
     source      = "scripts/init.sh"
   }
   provisioner "shell" {
     inline = [
-      "sudo chmod +x /opt/start_up.sh"
+      "sudo chmod +x /opt/init.sh"
     ]
   }
   provisioner "shell" {

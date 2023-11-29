@@ -4,7 +4,7 @@ const { getAssignments,
     getAssignmentById,
     createAssignment,
     updateAssignment,
-    deleteAssignment } = require('../controllers/Assignment');
+    deleteAssignment,submitAssignment } = require('../controllers/Assignment');
 
 const router = express.Router();
 const logger = require('../log');
@@ -18,6 +18,7 @@ router.patch('*', authenticateUser, (req, res) => {
 router.get('/', authenticateUser, getAssignments);
 router.get('/:id', authenticateUser, getAssignmentById);
 router.post('/', authenticateUser, createAssignment);
+router.post('/:id/submission', authenticateUser, submitAssignment);
 router.put('/:id', authenticateUser, updateAssignment);
 router.delete('/:id', authenticateUser, deleteAssignment);
 

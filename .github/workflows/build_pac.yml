@@ -136,4 +136,6 @@ jobs:
         -var "DB_NAME=${{ secrets.DB_NAME }}" \
         -var "PORT=${{ secrets.PORT }}" \
         -var "ENV_TYPE=${{ secrets.ENV_TYPE }}" \
+
         ami-p.pkr.hcl
+

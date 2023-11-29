@@ -1,6 +1,17 @@
-const { Assignment } = require('../models/model');
+// At the top of your file where you're using AWS services
+const AWS = require('aws-sdk');
+
+AWS.config.update({
+   region: 'us-east-1'
+   // Credentials are obtained from the IAM role in this case
+});
+
+const { Assignment, Submission } = require('../models/model');
 const { ValidationError } = require('sequelize');
 const logger = require('../log');
+const path = require('path');
+const sns = new AWS.SNS();
+const { downloadAndSaveZip } = require('../helpers/downloadAndSaveZip'); 
 
 const hasPayload = (req) => req.body && Object.keys(req.body).length !== 0;
 const hasQueryParameters = (req) => req.query && Object.keys(req.query).length !== 0;
@@ -30,10 +41,8 @@ const getAssignments = async (req, res) => {
 
 const getAssignmentById = async (req, res) => {
     logger.debug("Accessed getAssignmentById()");
-    const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
 
-    if (!uuidPattern.test(req.params.id)) {
-        logger.error(`Invalid UUID format - Assignment: ${req.params.id}`);
+    if(!validateAssignmentId(req.params.id)) {
         return res.status(400).json({ error: 'Invalid UUID format.' });
     }
 
@@ -154,11 +163,19 @@ const createAssignment = async (req, res) => {
 const deleteAssignment = async (req, res) => {
     logger.debug("Accessed deleteAssignment()");
 
-    try {
-        const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+    if (hasPayload(req)) {
+        // Payload not allowed
+        logger.error("Payload not allowed");
+        return res.status(400).set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'X-Content-Type-Options': 'nosniff'
+        }).send({ error: 'Payload not allowed' });
+    }
 
-        if (!uuidPattern.test(req.params.id)) {
-            logger.error(`Invalid UUID format - Assignment: ${req.params.id}`);
+    try {
+
+        if(!validateAssignmentId(req.params.id)) {
             return res.status(400).json({ error: 'Invalid UUID format.' });
         }
 
@@ -168,6 +185,13 @@ const deleteAssignment = async (req, res) => {
         if (assignment.accountId !== req.account.id) {
             logger.error(`Forbidden - Not authorized to delete this assignment`);
             return res.status(403).json({ error: 'Not authorized to delete this assignment.' });
+        }
+
+        // Check for existing submissions
+        const submissions = await Submission.findAll({ where: { assignment_id: req.params.id } });
+        if (submissions.length > 0) {
+            // If submissions exist, block deletion
+            return res.status(400).json({ error: 'Cannot delete assignment as there are submissions linked to it.' });
         }
 
         await assignment.destroy();
@@ -190,10 +214,8 @@ const updateAssignment = async (req, res) => {
     }
 
     try {
-        const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
 
-        if (!uuidPattern.test(req.params.id)) {
-            logger.error(`Invalid UUID format - Assignment: ${req.params.id}`);
+        if(!validateAssignmentId(req.params.id)) {
             return res.status(400).json({ error: 'Invalid UUID format.' });
         }
 
@@ -223,10 +245,151 @@ const updateAssignment = async (req, res) => {
 };
 
 
+const validateAssignmentId = (id) => {
+    const uuidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+        if (!uuidPattern.test(id)) {
+            logger.error(`Invalid UUID format - Assignment: ${id}`);
+            return false;
+        }
+    return true;
+}
+
+const submitAssignment = async (req, res) => {
+    logger.debug(`Accessed submitAssignment()`);
+    const assignmentId = req.params.id;
+    const { submission_url } = req.body;
+
+    const rootPath = path.join(__dirname, '..');
+    const fileName = `submission_${assignmentId}_${Date.now()}.zip`;
+    const savePath = path.join(rootPath, fileName);
+
+    // Validate the submission URL
+    if (!submission_url || typeof submission_url !== 'string') {
+        logger.error('Invalid submission URL provided');
+        return res.status(400).json({ error: 'Submission URL is required and must be a string.' });
+    }
+
+    if (!submission_url.endsWith('.zip')) {
+        logger.error('Invalid submission URL: URL must end with .zip');
+        return res.status(400).json({ error: 'Invalid submission URL: URL must end with .zip' });
+    }
+
+    if(!validateAssignmentId(assignmentId)) {
+        logger.error(`Invalid UUID format for assignment ID: ${assignmentId}`);
+        return res.status(400).json({ error: 'Invalid UUID format.' });
+    }
+
+    try {
+        // Check if the assignment exists
+        const assignment = await Assignment.findByPk(assignmentId);
+        if (!assignment) {
+            logger.error(`Assignment not found: ${assignmentId}`);
+            return res.status(404).json({ error: 'Assignment not found.' });
+        }
+
+
+        // Check for deadline and attempt limits
+        if (new Date() > new Date(assignment.deadline)) {
+            const errorMessage = 'Assignment deadline has passed.';
+            logger.warn(`Assignment deadline has passed for assignment: ${assignmentId}`);
+            // snsMessage.status = '403';
+            // snsMessage.message = errorMessage;
+            // publishToSNS(snsMessage);
+            return res.status(403).json({ error: 'Assignment deadline has passed.' });
+        }
+
+        // Count existing submissions
+        const submissionsCount = await Submission.count({
+            where: { assignment_id: assignmentId }
+        });
+
+        if (submissionsCount >= assignment.num_of_attempts) {
+            const errorMessage = 'Maximum number of attempts reached.';
+            // snsMessage.status = '403';
+            // snsMessage.message = errorMessage;
+            // publishToSNS(snsMessage);
+            logger.warn(`Maximum number of attempts reached for assignment: ${assignmentId}`);
+            return res.status(403).json({ error: 'Maximum number of attempts reached.' });
+        }
+
+        logger.debug('Creating new submission record');
+        const submission = await Submission.create({
+            assignment_id: assignmentId,
+            submission_url,
+            submission_date: new Date(),
+            submission_updated: new Date()
+        });
+
+        const snsMessage = {
+            email: req.account.email,
+            assignmentId: assignmentId,
+            assignmentName: assignment.name,
+            submissionCount: submissionsCount,
+            submissionUrl: submission_url,
+          };
+
+          console.log(snsMessage)
+   
+          const snsParams = {
+            Message: JSON.stringify(snsMessage),
+            TopicArn: process.env.SNS_Topic_ARN,
+          };
+   
+          await sns.publish(snsParams).promise();
+
+        // const snsMessage = {
+        //     submission_id: submission.id,
+        //     assignment_id: assignmentId,
+        //     submission_url: submission_url,
+        //     user_email: req.account.email,
+        //     assignment_creator: assignment.accountId,
+        //     status: '',
+        //     message: ''
+        //  };
+
+        // try {
+        //     await downloadAndSaveZip(submission_url, savePath);
+        //     logger.info(`File downloaded successfully to ${savePath}`);
+        // } catch (err) {
+        //     logger.error(`Error downloading file: ${err.message}`);
+        //     return res.status(500).json({ error: `Error downloading file: ${err.message}` });
+        // }
+
+        // snsMessage.status = '201';
+        // snsMessage.message = 'Submission created successfully.';
+        // await publishToSNS(snsMessage);
+
+        logger.info(`Submission created successfully for assignment: ${assignmentId}`);
+        res.status(201).json(submission);
+    } catch (err) {
+        logger.error(`Error in submitAssignment: ${err.message}`);
+        res.status(400).json({ error: 'Internal server error.' });
+    }
+};
+
+
+// const publishToSNS = async (message) => {
+//     const params = {
+//         Message: JSON.stringify(message),
+//         TopicArn: 'your-sns-topic-arn'
+//     };
+
+//     try {
+//         const data = await sns.publish(params).promise();
+//         logger.info(`Message published to SNS topic: ${data.MessageId}`);
+//     } catch (err) {
+//         logger.error(`Error publishing to SNS: ${err.message}`);
+//         // Optionally throw the error or handle it as per your application's logic
+//     }
+// };
+
+
+
 module.exports = {
     getAssignments,
     getAssignmentById,
     createAssignment,
     updateAssignment,
-    deleteAssignment
+    deleteAssignment,
+    submitAssignment
 };

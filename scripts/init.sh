@@ -49,6 +49,7 @@ sudo chown -R webapp_user:webapp_user /home/webapp_user
  
 # Restrict directory permissions to be more secure (remove execute permissions for others)
 sudo chmod -R 755 /home/webapp_user
+sudo chmod +w /var/log/
 
 # Create a log directory for webapp
 sudo mkdir -p /var/log/webapp

@@ -1,14 +1,9 @@
 # YAML file to test github actions
-
 name: Integration test
-
 run-name: ${{ github.actor }} is building and testing server
 
 on:
   pull_request:
-    branches:
-      - main
-  push:
     branches:
       - main
 
@@ -49,7 +44,9 @@ jobs:
           done
 
       - name: Run health check and Start server in background
-        run: npm start &
+        run: |
+          npm start &
+          echo "SERVER_PID=$!" >> $GITHUB_ENV
         env:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
@@ -77,3 +74,10 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           PORT: ${{ secrets.PORT }}
           ENV_TYPE: ${{ secrets.ENV_TYPE }}
+      
+      - name: Terminate Server Process
+        if: always()
+        run: |
+          kill $SERVER_PID || true
+        env:
+          SERVER_PID: ${{ env.SERVER_PID }}

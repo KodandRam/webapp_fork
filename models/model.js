@@ -28,4 +28,5 @@ Assignment.belongsTo(Account, { foreignKey: 'accountId', as: 'account' });
 Assignment.hasMany(Submission, { foreignKey: 'assignment_id', as: 'submissions' });
 Submission.belongsTo(Assignment, { foreignKey: 'assignment_id', as: 'assignment' });
 
+
 module.exports = { db, Account, Assignment, Submission}

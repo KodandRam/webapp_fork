@@ -2,7 +2,8 @@
 require('dotenv').config();
 
 const app = require('./app');
-const path = require('path');
+
+const processCsv = require('./helpers/userImporter');
 
 // Importing Sequelize database connection (instance)
 const { db } = require('./models/model');
@@ -41,4 +42,4 @@ db.sync({ force: false, alter: true })
         process.exit(1);
     });
 
-    
+

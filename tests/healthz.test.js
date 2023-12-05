@@ -1,3 +1,4 @@
+// Load environment variables from .env file into process.env
 require('dotenv').config();
 
 console.log("process.env", process.env);

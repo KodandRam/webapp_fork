@@ -1,4 +1,4 @@
-name: Build AMI
+name: Build Packer AMI
 run-name: ${{ github.actor }} is running packer build
 
 on:

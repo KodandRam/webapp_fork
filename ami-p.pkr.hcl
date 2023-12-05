@@ -7,7 +7,6 @@ packer {
   }
 }
 
-
 variable "aws_region" {
   type    = string
   default = "us-east-1"
@@ -79,7 +78,7 @@ variable "ENV_TYPE" {
 }
 
 
-# https://www.packer.io/plugins/builders/amazon/ebs
+# https://www.packer.io/plugins/builders/amazon/ebs/
 source "amazon-ebs" "my-ami" {
   region          = "${var.aws_region}"
   ami_name        = "csye6225_${formatdate("YYYY_MM_DD_hh_mm_ss", timestamp())}"
@@ -133,9 +132,16 @@ build {
   }
 
   provisioner "file" {
+
+    destination = "/opt/cloudwatch-config.json"
+    source      = "scripts/cloudwatch-config.json"
+  }
+  provisioner "file" {
+
     destination = "/opt/init.sh"
     source      = "scripts/init.sh"
   }
+
   provisioner "shell" {
     inline = [
       "sudo chmod +x /opt/init.sh"

@@ -44,14 +44,11 @@ echo "Contents after unzip:"
 sudo ls -alh /home/admin/
 sudo ls -alh /opt/
 
-## Change Ownership and Set Permissions
+# Change Ownership and Set Permissions
 sudo chown -R webapp_user:webapp_user /home/webapp_user
-
+ 
 # Restrict directory permissions to be more secure (remove execute permissions for others)
 sudo chmod -R 755 /home/webapp_user
-
-# Modify permissions of /var/log directory
-sudo chmod 777 /var/log
 
 # Create a log directory for webapp
 sudo mkdir -p /var/log/webapp

@@ -1,17 +1,21 @@
-name: AMI Build
-
+name: Build AMI
 run-name: ${{ github.actor }} is running packer build
 
 on:
   push:
     branches:
       - main
-  workflow_run:
-    workflows: ["Integration test"]
-    types:
-      - completed
+
+env:
+  DEMO_AWS_ACCESS_KEY_ID: ${{ secrets.DEMO_AWS_ACCESS_KEY_ID }}
+  DEMO_AWS_SECRET_ACCESS_KEY: ${{ secrets.DEMO_AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ vars.AMI_REGION }}
+  LAUNCH_TEMPLATE_NAME: ${{ vars.LAUNCH_TEMPLATE_NAME }}
+  AUTO_SCALE_GROUP_NAME : ${{ vars.AUTO_SCALE_GROUP_NAME }}
+
 jobs:
   build_ami:
+    # name: Integration Test and Packer AMI Build
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -27,18 +31,73 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16
+    - name: Display node-version
+      run: node --version
+
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        until nc -z localhost 5432; do
+          sleep 1
+        done
+
+    - name: Run health check and Start server in background
+      run: npm start &
+      env:
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_DIALECT: ${{ secrets.DB_DIALECT }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        PORT: ${{ secrets.PORT }}
+        ENV_TYPE: ${{ secrets.ENV_TYPE }}
+
+    - name: Wait for server to be ready
+      run: |
+        until nc -z localhost 8080; do
+          sleep 1
+        done
+
+    - name: Running healthz integration test
+      run: npm test
+      env:
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_DIALECT: ${{ secrets.DB_DIALECT }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        PORT: ${{ secrets.PORT }}
+        ENV_TYPE: ${{ secrets.ENV_TYPE }}
 
     - name: Set up Packer
       uses: hashicorp/setup-packer@main
       with:
         packer_version: latest
-    
+
+    - name: Delete the node modules in the webapp
+      run: |
+        if [ -d ./node_modules ]; then
+          echo "node_modules exists. Deleting it..."
+          rm -rf ./node_modules
+        else
+          echo "node_modules does not exist."
+        fi
+
     - name: Packer Init
       run: |
         packer init .
 
     - name: Zip the webapp
-      run: zip -r ${{ github.workspace }}/webapp.zip .
+      run: zip -r ${{ github.workspace }}/webapp.zip . --exclude .git/\*
 
     - name: Check if webapp.zip exists
       run: |
@@ -85,3 +144,53 @@ jobs:
         -var "PORT=${{ secrets.PORT }}" \
         -var "ENV_TYPE=${{ secrets.ENV_TYPE }}" \
         ami-p.pkr.hcl
+        ami_id=$(cat manifest.json | grep -o '"artifact_id": "[^"]*' | cut -d'"' -f4 | cut -d':' -f2)
+        echo $ami_id
+        echo "AMI_ID=$ami_id" >> $GITHUB_ENV
+
+    - name: Set AMI ID as a variable
+      run: echo "ami_id=${{ env.AMI_ID }}"
+
+    - name: Create New Version of Launch Template
+      run: |
+        export AWS_ACCESS_KEY_ID=${{ secrets.DEMO_AWS_ACCESS_KEY_ID }}
+        export AWS_SECRET_ACCESS_KEY=${{ secrets.DEMO_AWS_SECRET_ACCESS_KEY }}
+        aws ec2 create-launch-template-version \
+        --launch-template-name ${{ env.LAUNCH_TEMPLATE_NAME }} \
+        --version-description "New version with AMI ${{ env.AMI_ID }}" \
+        --region $AWS_REGION \
+        --source-version 1 \
+        --launch-template-data '{"ImageId": "${{ env.AMI_ID }}" }'
+    
+    - name: Apply Launch Template Refresh
+      run: |
+        export AWS_ACCESS_KEY_ID=${{ secrets.DEMO_AWS_ACCESS_KEY_ID }}
+        export AWS_SECRET_ACCESS_KEY=${{ secrets.DEMO_AWS_SECRET_ACCESS_KEY }}
+
+
+        refresh_response=$(aws autoscaling start-instance-refresh \
+        --auto-scaling-group-name $AUTO_SCALE_GROUP_NAME \
+        --desired-configuration '{"LaunchTemplate" : { "LaunchTemplateName":"${{ env.LAUNCH_TEMPLATE_NAME }}", "Version":"$Latest" }}' \
+        --region $AWS_REGION \
+        --query 'InstanceRefreshId' \
+        --output text)
+
+        while true; do
+          refresh_status=$(aws autoscaling describe-instance-refreshes \
+            --auto-scaling-group-name $AUTO_SCALE_GROUP_NAME \
+            --instance-refresh-ids $refresh_response \
+            --region $AWS_REGION \
+            --query 'InstanceRefreshes[0].Status' \
+            --output text)
+    
+          if [ "$refresh_status" == "Pending" ] || [ "$refresh_status" == "InProgress" ]; then
+            echo "Instance refresh is still in progress. Waiting..."
+            sleep 60  # Wait for 60 seconds before checking again
+          elif [ "$refresh_status" == "Successful" ]; then
+            echo "Instance refresh completed successfully."
+            break  # Exit the loop when refresh is successful
+          else
+            echo "Error: Instance refresh failed or encountered an unexpected status: $refresh_status"
+            exit 1  # Exit with an error if refresh fails or has unexpected status
+          fi
+        done

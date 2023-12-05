@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 sleep 10
 sudo chmod 755 /opt
 sudo apt-get update

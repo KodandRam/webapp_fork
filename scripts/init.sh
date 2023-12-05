@@ -51,7 +51,10 @@ sudo chown -R webapp_user:webapp_user /home/webapp_user
 sudo chmod -R 755 /home/webapp_user
 
 # Create a log directory for webapp
-sudo chown -R webapp_user:webapp_user /var/log/webapp
+if [ ! -d /var/log/webapp ]; then
+    sudo mkdir -p /var/log/webapp
+    sudo chown -R webapp_user:webapp_user /var/log/webapp
+fi
 sudo chmod 755 /var/log/webapp
 sudo mkdir -p /var/log/webapp
 

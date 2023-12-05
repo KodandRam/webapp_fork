@@ -46,7 +46,7 @@ sudo ls -alh /opt/
 
 # Change Ownership and Set Permissions
 sudo chown -R webapp_user:webapp_user /home/webapp_user
-
+ 
 # Restrict directory permissions to be more secure (remove execute permissions for others)
 sudo chmod -R 755 /home/webapp_user
 
@@ -56,6 +56,7 @@ sudo chown -R webapp_user:webapp_user /var/log/webapp
 sudo chmod 755 /var/log/webapp
 
 cd /home/webapp_user/webapp || { echo "Directory not found"; exit 1; }
+# cp /opt/users.csv /home/webapp_user/webapp/opt/users.csv
 
 # Create .env file in webapp directory
 echo "Creating .env file in webapp directory..."

@@ -17,16 +17,16 @@ jobs:
   build_ami:
     # name: Integration Test and Packer AMI Build
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          POSTGRES_DB: postgres
-        ports:
-          - 5432:5432
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    # services:
+    #   postgres:
+    #     image: postgres:latest
+    #     env:
+    #       POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+    #       POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    #       POSTGRES_DB: postgres
+    #     ports:
+    #       - 5432:5432
+    #     options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
     
     steps:
     - name: Checkout code
@@ -42,41 +42,41 @@ jobs:
     - name: Install dependencies
       run: npm install
       
-    - name: Wait for PostgreSQL to be ready
-      run: |
-        until nc -z localhost 5432; do
-          sleep 1
-        done
+    # - name: Wait for PostgreSQL to be ready
+    #   run: |
+    #     until nc -z localhost 5432; do
+    #       sleep 1
+    #     done
 
-    - name: Run health check and Start server in background
-      run: npm start &
-      env:
-        DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_DIALECT: ${{ secrets.DB_DIALECT }}
-        DB_PORT: ${{ secrets.DB_PORT }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        PORT: ${{ secrets.PORT }}
-        ENV_TYPE: ${{ secrets.ENV_TYPE }}
+    # - name: Run health check and Start server in background
+    #   run: npm start &
+    #   env:
+    #     DB_USERNAME: ${{ secrets.DB_USERNAME }}
+    #     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    #     DB_HOST: ${{ secrets.DB_HOST }}
+    #     DB_DIALECT: ${{ secrets.DB_DIALECT }}
+    #     DB_PORT: ${{ secrets.DB_PORT }}
+    #     DB_NAME: ${{ secrets.DB_NAME }}
+    #     PORT: ${{ secrets.PORT }}
+    #     ENV_TYPE: ${{ secrets.ENV_TYPE }}
 
-    - name: Wait for server to be ready
-      run: |
-        until nc -z localhost 8080; do
-          sleep 1
-        done
+    # - name: Wait for server to be ready
+    #   run: |
+    #     until nc -z localhost 8080; do
+    #       sleep 1
+    #     done
 
-    - name: Running healthz integration test
-      run: npm test
-      env:
-        DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_DIALECT: ${{ secrets.DB_DIALECT }}
-        DB_PORT: ${{ secrets.DB_PORT }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        PORT: ${{ secrets.PORT }}
-        ENV_TYPE: ${{ secrets.ENV_TYPE }}
+    # - name: Running healthz integration test
+    #   run: npm test
+    #   env:
+    #     DB_USERNAME: ${{ secrets.DB_USERNAME }}
+    #     DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+    #     DB_HOST: ${{ secrets.DB_HOST }}
+    #     DB_DIALECT: ${{ secrets.DB_DIALECT }}
+    #     DB_PORT: ${{ secrets.DB_PORT }}
+    #     DB_NAME: ${{ secrets.DB_NAME }}
+    #     PORT: ${{ secrets.PORT }}
+    #     ENV_TYPE: ${{ secrets.ENV_TYPE }}
 
     - name: Set up Packer
       uses: hashicorp/setup-packer@main

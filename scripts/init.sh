@@ -51,13 +51,16 @@ sudo chown -R webapp_user:webapp_user /home/webapp_user
 sudo chmod -R 755 /home/webapp_user
 
 # Create a log directory for webapp
+echo "Checking if /var/log/webapp exists..."
 if [ ! -d /var/log/webapp ]; then
+    echo "Directory does not exist. Creating..."
     sudo mkdir -p /var/log/webapp
+    sudo chmod 755 /var/log/webapp
     sudo chown -R webapp_user:webapp_user /var/log/webapp
+else
+    echo "Directory already exists."
 fi
 sudo chmod 755 /var/log/webapp
-sudo mkdir -p /var/log/webapp
-
 cd /home/webapp_user/webapp || { echo "Directory not found"; exit 1; }
 # cp /opt/users.csv /home/webapp_user/webapp/opt/users.csv
 

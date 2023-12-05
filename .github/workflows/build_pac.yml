@@ -158,7 +158,7 @@ jobs:
         aws ec2 create-launch-template-version \
         --launch-template-name ${{ env.LAUNCH_TEMPLATE_NAME }} \
         --version-description "New version with AMI ${{ env.AMI_ID }}" \
-        --region $AWS_REGION \
+        --region ${{ env.AWS_REGION }} \
         --source-version 1 \
         --launch-template-data '{"ImageId": "${{ env.AMI_ID }}" }'
     
